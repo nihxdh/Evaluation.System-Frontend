@@ -167,7 +167,7 @@ const Profile = () => {
   return (
     <PageBackground>
       <Header />
-      <div className="max-w-7xl mx-auto px-6 pt-32 pb-6">
+      <div className="max-w-7xl mx-auto px-1 pt-32 pb-6">
         {/* Profile Section */}
         <div className="bg-white rounded-xl border border-gray-900/[0.05] overflow-hidden mb-8">
           <div className="px-6 py-4 border-b border-gray-900/[0.05]">

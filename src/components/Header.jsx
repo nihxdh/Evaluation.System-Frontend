@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, NavLink, useLocation } from 'react-router-dom';
 import { BookOpen, LogOut, LayoutDashboard, Users, FileText, Bell } from 'lucide-react';
+import LogoutConfirmationModal from './LogoutConfirmationModal';
 
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAdmin = localStorage.getItem('isAdmin') === 'true';
   const userName = localStorage.getItem('name');
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const adminNavItems = [
     { icon: Users, label: 'Students', path: '/admin/students' },
@@ -20,9 +22,18 @@ const Header = () => {
     { icon: Users, label: 'Profile', path: '/student/profile' },
   ];
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setShowLogoutModal(true);
+  };
+
+  const handleLogoutConfirm = () => {
     localStorage.clear();
+    setShowLogoutModal(false);
     navigate('/');
+  };
+
+  const handleLogoutCancel = () => {
+    setShowLogoutModal(false);
   };
 
   const navItems = isAdmin ? adminNavItems : studentNavItems;
@@ -50,7 +61,7 @@ const Header = () => {
                 </span>
               </div>
               <button
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
                 className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/[0.08] transition-all"
               >
                 <LogOut className="h-4 w-4" />
@@ -59,13 +70,13 @@ const Header = () => {
           </div>
 
           {/* Navigation Bar */}
-          <nav className="flex items-center px-6 h-12 bg-gray-800/95 border-b border-white/[0.08]">
+          <nav className="flex items-center gap-4 px-6 h-12 bg-gray-800/95 border-b border-white/[0.08]">
             {navItems.map((item) => (
               <NavLink
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-all rounded-md ${
+                  `flex items-center gap-2 px-4 py-2 text-sm font-medium transition-all rounded-md ${
                     isActive
                       ? 'bg-white/[0.12] text-white'
                       : 'text-white/80 hover:bg-white/[0.08] hover:text-white'
@@ -79,6 +90,13 @@ const Header = () => {
           </nav>
         </div>
       </div>
+      
+      {/* Logout Confirmation Modal */}
+      <LogoutConfirmationModal
+        isOpen={showLogoutModal}
+        onConfirm={handleLogoutConfirm}
+        onCancel={handleLogoutCancel}
+      />
     </header>
   );
 };

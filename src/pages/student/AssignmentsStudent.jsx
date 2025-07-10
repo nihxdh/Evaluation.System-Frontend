@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Upload, Download, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Upload, Download, X, ChevronDown, ChevronUp } from 'lucide-react';
 import PageBackground from '../../components/PageBackground';
 import Header from '../../components/Header';
 
@@ -12,6 +12,7 @@ const AssignmentsStudent = () => {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [selectedAssignment, setSelectedAssignment] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [openGrading, setOpenGrading] = useState([]); // Track open grading details
 
   useEffect(() => {
     // Get student year from localStorage
@@ -173,6 +174,15 @@ const AssignmentsStudent = () => {
     return !assignment.submitted && new Date(assignment.dueDate) > new Date();
   };
 
+  // Toggle grading details for a given assignment
+  const toggleGrading = (assignmentId) => {
+    setOpenGrading((prev) =>
+      prev.includes(assignmentId)
+        ? prev.filter((id) => id !== assignmentId)
+        : [...prev, assignmentId]
+    );
+  };
+
   if (loading) {
     return (
       <PageBackground>
@@ -202,7 +212,7 @@ const AssignmentsStudent = () => {
     <PageBackground>
       <Header />
       <main className="pt-32">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-1">
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h1 className="text-xl font-semibold text-gray-800">My Assignments</h1>
@@ -226,20 +236,34 @@ const AssignmentsStudent = () => {
             <div className="grid gap-6">
               {sortedAssignments.map((assignment) => {
                 const status = getSubmissionStatus(assignment);
+                const isGraded = assignment.submitted && assignment.grade !== null;
+                const gradingOpen = openGrading.includes(assignment._id);
                 return (
-                  <div
+                  <motion.div
                     key={assignment._id}
-                    className="bg-white rounded-lg border border-gray-900/[0.05] p-6 space-y-4"
+                    layout
+                    className="bg-white rounded-lg border border-gray-900/[0.05] p-6 space-y-4 shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="flex items-start justify-between">
                       <div>
                         <h2 className="text-lg font-medium text-gray-800">{assignment.title}</h2>
                         <p className="text-sm text-gray-500 mt-1">{assignment.description}</p>
                       </div>
-                      <div
-                        className={`px-3 py-1 rounded-full text-sm font-medium bg-${status.color}-50 text-${status.color}-700`}
-                      >
-                        {status.label}
+                      <div className="flex flex-col items-end gap-1 min-w-[120px]">
+                        <div
+                          className={`px-3 py-1 rounded-full text-sm font-medium bg-${status.color}-50 text-${status.color}-700`}
+                        >
+                          {status.label}
+                        </div>
+                        {assignment.submitted && (
+                          <button
+                            onClick={() => toggleGrading(assignment._id)}
+                            className="flex items-center gap-1 text-sm text-gray-700 hover:text-gray-900 font-medium focus:outline-none mt-1"
+                          >
+                            {gradingOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            {gradingOpen ? 'Hide Details' : 'View Details'}
+                          </button>
+                        )}
                       </div>
                     </div>
 
@@ -249,54 +273,68 @@ const AssignmentsStudent = () => {
                       </div>
                     </div>
 
-                    {assignment.submitted && (
-                      <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className="text-sm font-medium text-gray-700">
-                            Your Submission
-                          </div>
-                          {assignment.fileName && (
-                            <button
-                              onClick={() => downloadSubmission(assignment._id, assignment.fileName)}
-                              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                    <div>
+                      {assignment.submitted && (
+                        <AnimatePresence initial={false}>
+                          {gradingOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.2 }}
+                              className="overflow-hidden"
                             >
-                              <Download className="h-4 w-4" />
-                              Download
-                            </button>
-                          )}
-                        </div>
-                        {assignment.grade !== null && (
-                          <div className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium text-gray-700">Grade:</span>
-                              <span className="text-sm text-gray-600">{assignment.grade}</span>
-                            </div>
-                            {assignment.feedback && (
-                              <div className="space-y-1">
-                                <span className="text-sm font-medium text-gray-700">Feedback:</span>
-                                <p className="text-sm text-gray-600">{assignment.feedback}</p>
+                              <div className="bg-gray-50 rounded-lg p-4 space-y-3 mt-2">
+                                <div className="flex items-center justify-between">
+                                  <div className="text-sm font-medium text-gray-700">
+                                    Your Submission
+                                  </div>
+                                  {assignment.fileName && (
+                                    <button
+                                      onClick={() => downloadSubmission(assignment._id, assignment.fileName)}
+                                      className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                                    >
+                                      <Download className="h-4 w-4" />
+                                      Download
+                                    </button>
+                                  )}
+                                </div>
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-gray-700">Grade:</span>
+                                    <span className="text-sm text-gray-600">{assignment.grade !== null ? assignment.grade : 'Not graded yet'}</span>
+                                  </div>
+                                  {assignment.feedback && (
+                                    <div className="space-y-1">
+                                      <span className="text-sm font-medium text-gray-700">Feedback:</span>
+                                      <p className="text-sm text-gray-600">{assignment.feedback}</p>
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      )}
+                    </div>
 
-                    {canSubmitAssignment(assignment) && (
-                      <div className="flex justify-end">
-                        <button
-                          onClick={() => {
-                            setSelectedAssignment(assignment);
-                            setShowSubmitModal(true);
-                          }}
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
-                        >
-                          <Upload className="h-4 w-4" />
-                          Submit Assignment
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                    <div>
+                      {canSubmitAssignment(assignment) && (
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => {
+                              setSelectedAssignment(assignment);
+                              setShowSubmitModal(true);
+                            }}
+                            className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                          >
+                            <Upload className="h-4 w-4" />
+                            Submit Assignment
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
                 );
               })}
 

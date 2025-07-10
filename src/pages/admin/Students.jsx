@@ -5,6 +5,7 @@ import axios from 'axios';
 import Header from '../../components/Header';
 import PageBackground from '../../components/PageBackground';
 import DeleteConfirmationModal from '../../components/DeleteConfirmationModal';
+import SearchBar from '../../components/SearchBar'; // <-- Import SearchBar
 
 const Students = () => {
   const [students, setStudents] = useState([]);
@@ -14,6 +15,7 @@ const Students = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
+  const [search, setSearch] = useState(''); // <-- Add search state
 
   // Form state
   const [formData, setFormData] = useState({
@@ -117,6 +119,11 @@ const Students = () => {
     }
   };
 
+  // Filter students by search query (case-insensitive, by name)
+  const filteredStudents = students.filter(student =>
+    student.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   if (loading) {
     return (
       <PageBackground>
@@ -132,27 +139,34 @@ const Students = () => {
     <PageBackground>
       <Header />
       <main className="pt-32">
-        <div className="max-w-7xl mx-auto px-6">
+        <div className="max-w-7xl mx-auto px-1">
           <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h1 className="text-xl font-semibold text-gray-800">Students</h1>
-              <button
-                onClick={() => {
-                  setSelectedStudent(null);
-                  setFormData({
-                    name: '',
-                    email: '',
-                    year: '1st',
-                    password: ''
-                  });
-                  setShowAddModal(true);
-                }}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                <Plus className="h-4 w-4" />
-                Add Student
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                <SearchBar
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Search by name..."
+                />
+                <button
+                  onClick={() => {
+                    setSelectedStudent(null);
+                    setFormData({
+                      name: '',
+                      email: '',
+                      year: '1st',
+                      password: ''
+                    });
+                    setShowAddModal(true);
+                  }}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Student
+                </button>
+              </div>
             </div>
 
             {/* Students Table */}
@@ -167,7 +181,7 @@ const Students = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-900/[0.05]">
-                  {students.map((student) => (
+                  {filteredStudents.map((student) => (
                     <tr key={student._id} className="hover:bg-gray-900/[0.01]">
                       <td className="px-6 py-4 text-sm text-gray-800">{student.name}</td>
                       <td className="px-6 py-4 text-sm text-gray-600">{student.email}</td>
@@ -189,7 +203,7 @@ const Students = () => {
                     </tr>
                   ))}
 
-                  {students.length === 0 && (
+                  {filteredStudents.length === 0 && (
                     <tr>
                       <td colSpan="4" className="px-6 py-12 text-center">
                         <div className="flex flex-col items-center">
@@ -197,7 +211,7 @@ const Students = () => {
                             <Plus className="h-6 w-6 text-gray-400" />
                           </div>
                           <h3 className="text-sm font-medium text-gray-900">No Students</h3>
-                          <p className="text-sm text-gray-500 mt-1">Add your first student to get started.</p>
+                          <p className="text-sm text-gray-500 mt-1">{search ? 'No students match your search.' : 'Add your first student to get started.'}</p>
                         </div>
                       </td>
                     </tr>
